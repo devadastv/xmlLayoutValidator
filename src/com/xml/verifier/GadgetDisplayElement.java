@@ -26,7 +26,7 @@ public class GadgetDisplayElement {
 
     @Override
     public String toString() {
-        return "[gadgetName = " + gadgetName + " bounds = " + bounds + "]";
+        return "[gadgetName = " + gadgetName + " bounds = " + bounds + " backgroundImagePath = " + backgroundImagePath + "]";
     }
 
     

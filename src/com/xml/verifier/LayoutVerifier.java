@@ -128,6 +128,7 @@ public class LayoutVerifier {
 
     private void addToLayout(Node gadgetNode, HashMap gadgetNameToBoundsMap, short gadgetType) {
         int x = 0, y = 0, width = 0, height = 0;
+        String formattedImagePath = null;
         String gadgetName = null;
         if (null != gadgetNode.getAttributes().getNamedItem("name"))
         {
@@ -161,11 +162,22 @@ public class LayoutVerifier {
                     height = Integer.parseInt(gadgetNode.getChildNodes().item(i).getTextContent());
 //                    System.out.println("height value is " + height);
                 }
+                if (nodeName.equals("image")) {
+                    String fullPath = gadgetNode.getChildNodes().item(i).getTextContent();
+                    System.out.println("fullPath = " + fullPath + " fullPath.lastIndexOf(/) = " + fullPath.lastIndexOf("/"));
+                    if (null != fullPath && fullPath.trim().length() != 0 && fullPath.indexOf("/") != -1)
+                    {
+                        formattedImagePath = fullPath.substring(fullPath.lastIndexOf("/") + 1);
+                    }
+                    
+                    System.out.println("fullPath = " + fullPath + " formattedImagePath = " + formattedImagePath);
+//                    System.out.println("height value is " + height);
+                }
             }
         }
         Rectangle bounds = new Rectangle(x, y, width, height);
         System.out.println("gadgetName = " + gadgetName + " is having bounds = " + bounds);
         
-        gadgetNameToBoundsMap.put(gadgetName, new GadgetDisplayElement(gadgetName, bounds, gadgetType, null));
+        gadgetNameToBoundsMap.put(gadgetName, new GadgetDisplayElement(gadgetName, bounds, gadgetType, formattedImagePath));
     }
 }
