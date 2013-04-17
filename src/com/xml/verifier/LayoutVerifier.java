@@ -25,6 +25,7 @@ import org.w3c.dom.NodeList;
  */
 public class LayoutVerifier {
 
+    public static final String BASE_DIR = "/home/devadas/dev/dstvo/tools/Tools-ng-encapsulation-dstvo";
     HashMap screenNameToGadgetMap;
     private int indexForGadget;
 
@@ -37,7 +38,7 @@ public class LayoutVerifier {
     }
 
     private void scanFilesInFolder() {
-        File flattenedDir = new File("/home/devadas/dev/dstvo/tools/Tools-ng-encapsulation-dstvo");
+        File flattenedDir = new File(BASE_DIR);
         File[] listOfFlattenedFiles = flattenedDir.listFiles(new FilenameFilter() {
 
             @Override
@@ -63,7 +64,7 @@ public class LayoutVerifier {
                 }
 
             } catch (Exception ex) {
-                ex.printStackTrace();
+//                ex.printStackTrace();
             }
         }
 
@@ -94,7 +95,7 @@ public class LayoutVerifier {
             System.exit(0);
         }
         
-        s = in.nextLine();
+//        s = in.nextLine();
          
         ArrayList gadgetMap = (ArrayList) screenNameToGadgetMap.get(screenList.get(screenIndex - 1));
         System.out.println("gadgetMap = " + gadgetMap);
@@ -185,9 +186,14 @@ public class LayoutVerifier {
                 if (nodeName.equals("image")) {
                     String fullPath = gadgetNode.getChildNodes().item(i).getTextContent();
                     System.out.println("fullPath = " + fullPath + " fullPath.lastIndexOf(/) = " + fullPath.lastIndexOf("/"));
+                    System.out.println("Modified :" + fullPath.substring(fullPath.lastIndexOf("/", fullPath.lastIndexOf("/") - 1)));
                     if (null != fullPath && fullPath.trim().length() != 0 && fullPath.indexOf("/") != -1)
                     {
-                        formattedImagePath = fullPath.substring(fullPath.lastIndexOf("/") + 1);
+                        formattedImagePath = fullPath.substring(fullPath.lastIndexOf("/", fullPath.lastIndexOf("/") - 1));
+                        if (formattedImagePath.startsWith("/News24"))
+                        {
+                            formattedImagePath = formattedImagePath.replaceFirst("News24", "News");
+                        }
                     }
                     
                     System.out.println("fullPath = " + fullPath + " formattedImagePath = " + formattedImagePath);

@@ -8,7 +8,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.Graphics;
-import java.awt.HeadlessException;
 
 /**
  *
@@ -19,7 +18,7 @@ public class LayoutDisplay extends Frame {
     ScreenMapper mapper;
     public LayoutDisplay() {
         
-        this.setBounds(0, 0, 1290, 730);
+        this.setBounds(0, 0, 1320, 730);
         this.setBackground(Color.white);
     }
     

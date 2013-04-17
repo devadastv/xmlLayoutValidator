@@ -79,7 +79,8 @@ public class GadgetDisplayElement implements Comparable
 
     private static Image loadImage(String fileName)
     {
-        fileName = "/home/devadas/dev/dstvo/Resources/Images/News/" + fileName;
+        fileName = LayoutVerifier.BASE_DIR + "/../../Resources/Images/" + fileName;
+        System.out.println("INSIDE fileName = " + fileName);
         Image image = Toolkit.getDefaultToolkit().createImage(fileName);
         MediaTracker tracker = new MediaTracker(new Container());
         tracker.addImage(image, 0);
