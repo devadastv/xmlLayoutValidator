@@ -30,7 +30,7 @@ public class GadgetConfig
         {
             return VERTICAL_LIST;
         }
-        if (gadgetName.equals("focusBox"))
+        if (gadgetName.equals("horizontalList"))
         {
             return HORIZONTAL_LIST;
         }
@@ -78,7 +78,7 @@ public class GadgetConfig
             case HORIZONTAL_LIST:
                 return Color.green;
             case FOCUS_BOX:
-                return Color.cyan;
+                return Color.green;
             case GRID:
                 return Color.cyan;
             case VERTICAL_BOX:
@@ -86,11 +86,11 @@ public class GadgetConfig
             case SELECTION_OVAL:
                 return Color.magenta;
             case ACTION_HELP:
-                return Color.ORANGE;
+                return Color.white;
             case VEIL_RECTANGLE:
                 return Color.PINK;
             case TEXT_BOX:
-                return Color.DARK_GRAY;
+                return Color.darkGray;
             case ARROWS:
                 return Color.RED;
             default:
