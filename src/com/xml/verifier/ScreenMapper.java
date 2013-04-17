@@ -5,6 +5,7 @@
 package com.xml.verifier;
 
 import java.awt.Container;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.List;
@@ -24,6 +25,7 @@ import java.util.Iterator;
 public class ScreenMapper extends Container
 {
     ArrayList gadgetMap;
+    Font HELP_ITEM_FONT = new Font("Helvetica LT Bold", Font.PLAIN, 24);
 
     public void displayScreen(Object obj)
     {
@@ -50,14 +52,11 @@ public class ScreenMapper extends Container
             g.setColor(GadgetConfig.getGadgetColor(gadgetElement.getGadgetType()));
             g.drawRect(gadgetElement.getBounds().x, gadgetElement.getBounds().y,
                     gadgetElement.getBounds().width, gadgetElement.getBounds().height);
-            if (null != gadgetElement.getBackgroundImagePath())
+            Image image = gadgetElement.getBackgroundImage();
+            if (null != image)
             {
-                Image image = gadgetElement.getBackgroundImage();
-                if (null != image)
-                {
-                    g.drawImage(image, gadgetElement.getBounds().x, gadgetElement.getBounds().y,
-                            gadgetElement.getBounds().width, gadgetElement.getBounds().height, this);
-                }
+                g.drawImage(image, gadgetElement.getBounds().x, gadgetElement.getBounds().y,
+                        gadgetElement.getBounds().width, gadgetElement.getBounds().height, this);
             }
 
             int stringXPos = gadgetElement.getBounds().x + 20;
@@ -79,11 +78,10 @@ public class ScreenMapper extends Container
                             Point pointToCompare = (Point) obj;
                             int verticalDifference = this.y - pointToCompare.y;
                             int horizontalDifference = this.x - pointToCompare.x;
-                            if ((verticalDifference < 19 && verticalDifference > -19) && (horizontalDifference < 50 && horizontalDifference > -50))
+                            if ((verticalDifference < 19 && verticalDifference > -19) && (horizontalDifference < 100 && horizontalDifference > -100))
                             {
                                 return true;
-                            }
-                            else
+                            } else
                             {
                                 return false;
                             }
@@ -98,8 +96,17 @@ public class ScreenMapper extends Container
                 }
                 index++;
             }
-
-            g.drawString(gadgetElement.getGadgetName(), stringLocation.x, stringLocation.y);
+            if (gadgetElement.getGadgetType() == GadgetConfig.HELP_ITEM)
+            {
+                Font defaultFont = g.getFont();
+                g.setFont(HELP_ITEM_FONT);
+                g.drawString(gadgetElement.getDisplayText(), gadgetElement.getBounds().x, gadgetElement.getBounds().y);
+                g.setFont(defaultFont);
+            } else
+            {
+                g.drawString(gadgetElement.getGadgetName(), stringLocation.x, stringLocation.y);
+            }
+            
         }
     }
 }
