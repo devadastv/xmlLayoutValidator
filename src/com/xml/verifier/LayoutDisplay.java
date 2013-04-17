@@ -8,6 +8,8 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  *
@@ -44,6 +46,15 @@ public class LayoutDisplay extends Frame {
         container.setVisible(true);
         this.add(container);
         this.setVisible(true);
+        addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                System.exit(0);
+            }
+
+        });
     }
     
     public void displayScreen(Object obj)
