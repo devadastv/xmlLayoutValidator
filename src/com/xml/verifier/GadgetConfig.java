@@ -23,6 +23,8 @@ public class GadgetConfig
     public static final short VEIL_RECTANGLE = 7;
     public static final short TEXT_BOX = 8;
     public static final short ARROWS = 9;
+    public static final short IMAGE_BOX = 10;
+
 
     public static short getGadgetType(String gadgetName)
     {
@@ -66,6 +68,10 @@ public class GadgetConfig
         {
             return ARROWS;
         }
+        if (gadgetName.equals("imageBox"))
+        {
+            return IMAGE_BOX;
+        }
         return GADGET_NOT_SUPPORTED;
     }
 
@@ -93,6 +99,8 @@ public class GadgetConfig
                 return Color.darkGray;
             case ARROWS:
                 return Color.RED;
+            case IMAGE_BOX:
+                return Color.green;
             default:
                 return Color.gray;
         }
