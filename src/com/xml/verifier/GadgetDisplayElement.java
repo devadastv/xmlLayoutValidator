@@ -21,13 +21,15 @@ public class GadgetDisplayElement implements Comparable
     private short gadgetType;
     private String backgroundImagePath;
     private Image backgroundImage;
+    private String displayText;
 
-    public GadgetDisplayElement(String gadgetName, Rectangle bounds, short gadgetType, String backgroundImagePath)
+    public GadgetDisplayElement(String gadgetName, Rectangle bounds, short gadgetType, String backgroundImagePath, String displayText)
     {
         this.gadgetName = gadgetName;
         this.bounds = bounds;
         this.gadgetType = gadgetType;
         this.backgroundImagePath = backgroundImagePath;
+        this.displayText = displayText;
     }
 
     @Override
@@ -60,14 +62,7 @@ public class GadgetDisplayElement implements Comparable
         return gadgetType;
     }
 
-    /**
-     * @return the backgroundImage
-     */
-    public String getBackgroundImagePath()
-    {
-        return backgroundImagePath;
-    }
-
+    
     public Image getBackgroundImage()
     {
         if (null != backgroundImagePath)
@@ -77,9 +72,18 @@ public class GadgetDisplayElement implements Comparable
         return backgroundImage;
     }
 
+
+    /**
+     * @return the displayText
+     */
+    public String getDisplayText()
+    {
+        return displayText;
+    }
+    
     private static Image loadImage(String fileName)
     {
-        fileName = LayoutVerifier.BASE_DIR + "/../../Resources/Images/" + fileName;
+        fileName = LayoutVerifier.OUTPUT_XML_DIR + "/../../Resources/Images/" + fileName;
         System.out.println("INSIDE fileName = " + fileName);
         Image image = Toolkit.getDefaultToolkit().createImage(fileName);
         MediaTracker tracker = new MediaTracker(new Container());
@@ -144,4 +148,5 @@ public class GadgetDisplayElement implements Comparable
             return 1;
         }
     }
+
 }
