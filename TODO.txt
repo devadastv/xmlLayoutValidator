@@ -1,0 +1,7 @@
+1. Check image drawing style for each gadget - vertical box, help item and image box. Adjust it accordingly
+2. Help items - individually
+		- with text/image support
+		- use MCAUI font
+3. Parent and child screen selection options to user
+4. Article screen error
+5. 
