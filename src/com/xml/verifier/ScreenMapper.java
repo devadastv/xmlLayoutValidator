@@ -78,7 +78,8 @@ public class ScreenMapper extends Container
                         {
                             Point pointToCompare = (Point) obj;
                             int verticalDifference = this.y - pointToCompare.y;
-                            if (verticalDifference < 19 && verticalDifference > -19)
+                            int horizontalDifference = this.x - pointToCompare.x;
+                            if ((verticalDifference < 19 && verticalDifference > -19) && (horizontalDifference < 50 && horizontalDifference > -50))
                             {
                                 return true;
                             }
