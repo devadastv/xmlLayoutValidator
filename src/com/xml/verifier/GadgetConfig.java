@@ -26,8 +26,6 @@ public class GadgetConfig
     public static final short IMAGE_BOX = 10;
     public static final short HELP_ITEM = 11;
 
-
-
     public static short getGadgetTypeIfSupported(String gadgetName)
     {
         if (gadgetName.equals("verticalList"))

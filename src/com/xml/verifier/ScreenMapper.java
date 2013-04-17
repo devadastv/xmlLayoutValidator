@@ -8,14 +8,9 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.List;
-import java.awt.MediaTracker;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -32,12 +27,9 @@ public class ScreenMapper extends Container
         System.out.println("setting mapper obj");
 
         this.gadgetMap = (ArrayList) obj;
-        System.out.println("On setting....gadgetMap = " + gadgetMap);
+        // Sort gadgets based on its image dimension to prevent overlapping
         Collections.sort(gadgetMap);
-        System.out.println("after sort....gadgetMap = " + gadgetMap);
-
-//        repaint();
-//        repaint(.getBounds());
+        System.out.println("Painting gadgetMap = " + gadgetMap);
     }
 
     @Override
@@ -59,9 +51,10 @@ public class ScreenMapper extends Container
                         gadgetElement.getBounds().width, gadgetElement.getBounds().height, this);
             }
 
+            // Logic to prevent the gadget name to display at different co-ordinates even when
+            // the gadget co-ordinates are the same
             int stringXPos = gadgetElement.getBounds().x + 20;
             int stringYPos = gadgetElement.getBounds().y;
-//            Point stringLocation = new Point (stringXPos, stringYPos);
             int index = 1;
             Point stringLocation;
             while (true)
@@ -106,7 +99,7 @@ public class ScreenMapper extends Container
             {
                 g.drawString(gadgetElement.getGadgetName(), stringLocation.x, stringLocation.y);
             }
-            
+
         }
     }
 }

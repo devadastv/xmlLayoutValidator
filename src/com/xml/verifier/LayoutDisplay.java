@@ -15,28 +15,27 @@ import java.awt.event.WindowEvent;
  *
  * @author devadas
  */
-public class LayoutDisplay extends Frame {
-
+public class LayoutDisplay extends Frame
+{
     ScreenMapper mapper;
-    public LayoutDisplay() {
-        
+
+    public LayoutDisplay()
+    {
         this.setBounds(0, 0, 1320, 730);
         this.setBackground(Color.white);
     }
-    
+
     public void initGUI()
     {
         Container container = new Container()
         {
-
             @Override
-            public void paint(Graphics g) {
-                
+            public void paint(Graphics g)
+            {
                 g.setColor(Color.lightGray);
                 g.fillRect(0, 0, 1280, 720);
                 super.paint(g);
             }
-            
         };
         container.setBounds(this.getBounds());
         mapper = new ScreenMapper();
@@ -46,17 +45,16 @@ public class LayoutDisplay extends Frame {
         container.setVisible(true);
         this.add(container);
         this.setVisible(true);
-        addWindowListener(new WindowAdapter() {
-
+        addWindowListener(new WindowAdapter()
+        {
             @Override
             public void windowClosing(WindowEvent e)
             {
                 System.exit(0);
             }
-
         });
     }
-    
+
     public void displayScreen(Object obj)
     {
         mapper.displayScreen(obj);

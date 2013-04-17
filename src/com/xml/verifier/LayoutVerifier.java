@@ -4,13 +4,11 @@
  */
 package com.xml.verifier;
 
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -30,20 +28,28 @@ public class LayoutVerifier
     public static final String STATIC_BACKGROUND_IMAGE = null;
     HashMap screenNameToGadgetMap;
     private int indexForGadget;
-    FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(new Font("Helvetica LT Bold", Font.PLAIN, 24));
+    private Rectangle actionHelpBounds;
 
     public static void main(String[] a)
     {
-        new LayoutVerifier().scanFilesInFolder();
+        new LayoutVerifier().doAction();
     }
-    private Rectangle actionHelpBounds;
+
+    private void doAction()
+    {
+        System.out.println("\n\n PLEASE WAIT WHILE THE XML FILES ARE BEING PARSED...");
+        File[] xmlFilesToProcess = scanFilesInFolder();
+        parseAllScreensAndPopulateMap(xmlFilesToProcess);
+        printListOfScreensForUserInput();
+        processUserInput();
+    }
 
     public LayoutVerifier()
     {
         screenNameToGadgetMap = new HashMap();
     }
 
-    private void scanFilesInFolder()
+    private File[] scanFilesInFolder()
     {
         File flattenedDir = new File(OUTPUT_XML_DIR);
         File[] listOfFlattenedFiles = flattenedDir.listFiles(new FilenameFilter()
@@ -58,9 +64,14 @@ public class LayoutVerifier
                 return false;
             }
         });
-        for (int i = 0; i < listOfFlattenedFiles.length; i++)
+        return listOfFlattenedFiles;
+    }
+
+    private void parseAllScreensAndPopulateMap(File[] xmlFilesToProcess)
+    {
+        for (int i = 0; i < xmlFilesToProcess.length; i++)
         {
-            File file = listOfFlattenedFiles[i];
+            File file = xmlFilesToProcess[i];
             DocumentBuilder dBuilder;
             try
             {
@@ -73,19 +84,16 @@ public class LayoutVerifier
                     verifyLayout(doc.getDocumentElement(), gadgetPropertyList);
                     addStaticBackground(gadgetPropertyList);
                 }
-
             } catch (Exception ex)
             {
-//                ex.printStackTrace();
             }
         }
+    }
 
-
-
-        // OPTIONS - after reading
-
+    private void printListOfScreensForUserInput()
+    {
         ArrayList screenList = new ArrayList(screenNameToGadgetMap.keySet());
-//        System.out.println("screenList size = " + screenList.size() + " screenNameToGadgetMap size = " + screenNameToGadgetMap.size());
+        Collections.sort(screenList);
         Iterator iterator = screenList.iterator();
         int index = 0;
         while (iterator.hasNext())
@@ -94,7 +102,13 @@ public class LayoutVerifier
             System.out.println("" + ++index + ". " + screenNameInMap);
         }
         System.out.println("Any other number : EXIT");
-        System.out.println("Please select the screen to check: ");
+        System.out.println("Please select the screen to analyze: ");
+    }
+
+    private void processUserInput()
+    {
+        ArrayList screenList = new ArrayList(screenNameToGadgetMap.keySet());
+        Collections.sort(screenList);
         Scanner in = new Scanner(System.in);
         String s = in.nextLine();
         int screenIndex = Integer.parseInt(s);
@@ -106,24 +120,11 @@ public class LayoutVerifier
             System.out.println("EXITING...");
             System.exit(0);
         }
-
-//        s = in.nextLine();
-
         ArrayList gadgetMap = (ArrayList) screenNameToGadgetMap.get(screenList.get(screenIndex - 1));
-        System.out.println("gadgetMap = " + gadgetMap);
-
-//        Arrays.s
-//        iterator = gadgetMap.values().iterator();
-//        while (iterator.hasNext()) {
-//            Rectangle gadgetBounds = (Rectangle) iterator.next();
-//            System.out.println("Bounds = " + gadgetBounds);
-//        }
         LayoutDisplay display = new LayoutDisplay();
         display.initGUI();
         display.displayScreen(gadgetMap);
-
     }
-
 
     private void addStaticBackground(ArrayList gadgetPropertyList)
     {
@@ -139,7 +140,6 @@ public class LayoutVerifier
         NodeList node = doc.getElementsByTagName("*");
         if (node.getLength() > 1 && node.item(1).getNodeName().equals("screen"))
         {
-            System.out.println("Screen name is : " + node.item(1).getAttributes().getNamedItem("name").getNodeValue());
             return true;
         }
         return false;
@@ -163,19 +163,16 @@ public class LayoutVerifier
                     if (nodeName.equals("screen"))
                     {
                         screenName = node.getChildNodes().item(i).getAttributes().getNamedItem("name").getNodeValue();
-                        System.out.println("screenName = " + screenName);
                     }
                     verifyLayout(node.getChildNodes().item(i), gadgetPropertyList);
                 }
             }
         }
-        
+
         if (null != screenName && !screenNameToGadgetMap.containsKey(screenName) && gadgetPropertyList.size() > 0)
         {
-            System.out.println("");
             screenNameToGadgetMap.put(screenName, gadgetPropertyList);
         }
-
     }
 
     private void addToLayout(Node gadgetNode, ArrayList gadgetPropertyList, short gadgetType)
@@ -242,17 +239,20 @@ public class LayoutVerifier
 
             gadgetPropertyList.add(new GadgetDisplayElement(gadgetName, bounds, gadgetType, formattedImagePath, displayText));
         }
-
     }
 
+    /**
+     * Returns the path along with its parent directory
+     * @param fullPath - a path in format "Folder1/Folder2/<Any level of folders>/xyz/abc/Image.png
+     * @return a path of format "abc/Image.png" corresponding to the parameter
+     */
     private String getFormattedPath(String fullPath)
     {
         String formattedImagePath = null;
-//        System.out.println("fullPath = " + fullPath + " fullPath.lastIndexOf(/) = " + fullPath.lastIndexOf("/"));
-//        System.out.println("Modified :" + fullPath.substring(fullPath.lastIndexOf("/", fullPath.lastIndexOf("/") - 1)));
         if (null != fullPath && fullPath.trim().length() != 0 && fullPath.indexOf("/") != -1)
         {
             formattedImagePath = fullPath.substring(fullPath.lastIndexOf("/", fullPath.lastIndexOf("/") - 1));
+            // Special case for News. Folder name in xml is News24 and in PC is News.
             if (formattedImagePath.startsWith("/News24"))
             {
                 formattedImagePath = formattedImagePath.replaceFirst("News24", "News");
@@ -287,7 +287,6 @@ public class LayoutVerifier
                                 // Get GroupItem image path attribute
                                 Node groupItemNode = conditionalDataNode.getChildNodes().item(k);
                                 imagePath = groupItemNode.getAttributes().getNamedItem("imagePath").getNodeValue();
-                                System.out.println("IMAGE BOX - IMAGE PATH = " + imagePath);
                             }
                         }
                     }

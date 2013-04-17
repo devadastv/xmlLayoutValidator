@@ -62,7 +62,6 @@ public class GadgetDisplayElement implements Comparable
         return gadgetType;
     }
 
-    
     public Image getBackgroundImage()
     {
         if (null != backgroundImagePath)
@@ -72,7 +71,6 @@ public class GadgetDisplayElement implements Comparable
         return backgroundImage;
     }
 
-
     /**
      * @return the displayText
      */
@@ -80,21 +78,18 @@ public class GadgetDisplayElement implements Comparable
     {
         return displayText;
     }
-    
+
     private static Image loadImage(String fileName)
     {
         fileName = LayoutVerifier.OUTPUT_XML_DIR + "/../../Resources/Images/" + fileName;
-        System.out.println("INSIDE fileName = " + fileName);
         Image image = Toolkit.getDefaultToolkit().createImage(fileName);
         MediaTracker tracker = new MediaTracker(new Container());
         tracker.addImage(image, 0);
         try
         {
             tracker.waitForAll();
-        }
-        catch (InterruptedException ex)
+        } catch (InterruptedException ex)
         {
-            ex.printStackTrace();
         }
         return image;
     }
@@ -116,37 +111,30 @@ public class GadgetDisplayElement implements Comparable
                     if (thisImageArea == othersImageArea)
                     {
                         return 0;
-                    }
-                    else if (thisImageArea > othersImageArea)
+                    } else if (thisImageArea > othersImageArea)
                     {
-                        return -1; 
-                    }
-                    else 
+                        return -1;
+                    } else
                     {
                         return 1;
                     }
-                }
-                else 
+                } else
                 {
                     return -1;
                 }
-            }
-            else 
+            } else
             {
                 if (null != othersBgImage)
                 {
                     return 1;
-                }
-                else 
+                } else
                 {
                     return 0;
                 }
             }
-        }
-        else
+        } else
         {
             return 1;
         }
     }
-
 }
