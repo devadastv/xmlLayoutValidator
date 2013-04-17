@@ -24,9 +24,11 @@ public class GadgetConfig
     public static final short TEXT_BOX = 8;
     public static final short ARROWS = 9;
     public static final short IMAGE_BOX = 10;
+    public static final short HELP_ITEM = 11;
 
 
-    public static short getGadgetType(String gadgetName)
+
+    public static short getGadgetTypeIfSupported(String gadgetName)
     {
         if (gadgetName.equals("verticalList"))
         {
@@ -72,6 +74,10 @@ public class GadgetConfig
         {
             return IMAGE_BOX;
         }
+        if (gadgetName.equals("helpItem"))
+        {
+            return HELP_ITEM;
+        }
         return GADGET_NOT_SUPPORTED;
     }
 
@@ -101,6 +107,8 @@ public class GadgetConfig
                 return Color.RED;
             case IMAGE_BOX:
                 return Color.green;
+            case HELP_ITEM:
+                return Color.cyan;
             default:
                 return Color.gray;
         }

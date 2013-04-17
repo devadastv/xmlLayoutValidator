@@ -1,7 +1,8 @@
 1. Check image drawing style for each gadget - vertical box, help item and image box. Adjust it accordingly
-2. Help items - individually
-		- with text/image support
-		- use MCAUI font
+2. Help items 	- individually with text/image support
+		- [DONE] use MCAUI font
 3. Parent and child screen selection options to user
 4. Article screen error
-5. 
+5. Static background image support
+6. Change gadget colors
+7. Renderer analysis per gadget (grid first)

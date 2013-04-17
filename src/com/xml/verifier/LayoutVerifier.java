@@ -4,15 +4,16 @@
  */
 package com.xml.verifier;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
-import java.util.TreeMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -25,14 +26,17 @@ import org.w3c.dom.NodeList;
  */
 public class LayoutVerifier
 {
-    public static final String BASE_DIR = "D:\\dev\\dstvo\\tools\\Tools-ng-encapsulation-dstvo\\";
+    public static final String OUTPUT_XML_DIR = "D:\\dev\\dstvo\\tools\\Tools-ng-encapsulation-dstvo\\";
+    public static final String STATIC_BACKGROUND_IMAGE = null;
     HashMap screenNameToGadgetMap;
     private int indexForGadget;
+    FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(new Font("Helvetica LT Bold", Font.PLAIN, 24));
 
     public static void main(String[] a)
     {
         new LayoutVerifier().scanFilesInFolder();
     }
+    private Rectangle actionHelpBounds;
 
     public LayoutVerifier()
     {
@@ -41,7 +45,7 @@ public class LayoutVerifier
 
     private void scanFilesInFolder()
     {
-        File flattenedDir = new File(BASE_DIR);
+        File flattenedDir = new File(OUTPUT_XML_DIR);
         File[] listOfFlattenedFiles = flattenedDir.listFiles(new FilenameFilter()
         {
             @Override
@@ -57,18 +61,17 @@ public class LayoutVerifier
         for (int i = 0; i < listOfFlattenedFiles.length; i++)
         {
             File file = listOfFlattenedFiles[i];
-            System.out.println("Filelist = " + file);
-
             DocumentBuilder dBuilder;
             try
             {
                 dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
                 Document doc = dBuilder.parse(file);
-                if (verifyScreenLayout(doc.getElementsByTagName("*")))
+                if (isScreenFile(doc))
                 {
-                    ArrayList gadgetNameToBoundsMap = new ArrayList();
+                    ArrayList gadgetPropertyList = new ArrayList();
                     indexForGadget = 0;
-                    verifyLayout(doc.getDocumentElement(), gadgetNameToBoundsMap);
+                    verifyLayout(doc.getDocumentElement(), gadgetPropertyList);
+                    addStaticBackground(gadgetPropertyList);
                 }
 
             } catch (Exception ex)
@@ -121,8 +124,19 @@ public class LayoutVerifier
 
     }
 
-    public boolean verifyScreenLayout(NodeList node)
+
+    private void addStaticBackground(ArrayList gadgetPropertyList)
     {
+        if (null != STATIC_BACKGROUND_IMAGE)
+        {
+            gadgetPropertyList.add(new GadgetDisplayElement("STATIC BACKGROUND CONFIGURED IN CODE", new Rectangle(0, 0, 1280, 720),
+                    GadgetConfig.VERTICAL_BOX, getFormattedPath(STATIC_BACKGROUND_IMAGE), null));
+        }
+    }
+
+    public boolean isScreenFile(Document doc)
+    {
+        NodeList node = doc.getElementsByTagName("*");
         if (node.getLength() > 1 && node.item(1).getNodeName().equals("screen"))
         {
             System.out.println("Screen name is : " + node.item(1).getAttributes().getNamedItem("name").getNodeValue());
@@ -131,9 +145,8 @@ public class LayoutVerifier
         return false;
     }
 
-    public void verifyLayout(Node node, ArrayList gadgetNameToBoundsMap)
+    public void verifyLayout(Node node, ArrayList gadgetPropertyList)
     {
-
         String screenName = null;
         if (node != null)
         {
@@ -142,37 +155,33 @@ public class LayoutVerifier
                 for (int i = 0; i < node.getChildNodes().getLength(); i++)
                 {
                     String nodeName = node.getChildNodes().item(i).getNodeName();
-//                    System.out.println("[DTV] nodeName = " + nodeName);
-//                    if ((nodeName.equals("grid")) || (nodeName.equals("verticalList"))
-//                            || (nodeName.equals("focusBox")) || (nodeName.equals("verticalBox"))) {
-//                        addToLayout(node.getChildNodes().item(i), gadgetNameToBoundsMap);
-//                    }
-                    short gadgetType = GadgetConfig.getGadgetType(nodeName);
+                    short gadgetType = GadgetConfig.getGadgetTypeIfSupported(nodeName);
                     if (gadgetType != GadgetConfig.GADGET_NOT_SUPPORTED)
                     {
-                        addToLayout(node.getChildNodes().item(i), gadgetNameToBoundsMap, gadgetType);
+                        addToLayout(node.getChildNodes().item(i), gadgetPropertyList, gadgetType);
                     }
                     if (nodeName.equals("screen"))
                     {
                         screenName = node.getChildNodes().item(i).getAttributes().getNamedItem("name").getNodeValue();
                         System.out.println("screenName = " + screenName);
                     }
-                    verifyLayout(node.getChildNodes().item(i), gadgetNameToBoundsMap);
+                    verifyLayout(node.getChildNodes().item(i), gadgetPropertyList);
                 }
             }
         }
-        if (null != screenName && !screenNameToGadgetMap.containsKey(screenName) && gadgetNameToBoundsMap.size() > 0)
+        
+        if (null != screenName && !screenNameToGadgetMap.containsKey(screenName) && gadgetPropertyList.size() > 0)
         {
             System.out.println("");
-            screenNameToGadgetMap.put(screenName, gadgetNameToBoundsMap);
+            screenNameToGadgetMap.put(screenName, gadgetPropertyList);
         }
 
     }
 
-    private void addToLayout(Node gadgetNode, ArrayList gadgetNameToBoundsMap, short gadgetType)
+    private void addToLayout(Node gadgetNode, ArrayList gadgetPropertyList, short gadgetType)
     {
         int x = 0, y = 0, width = 0, height = 0;
-        String formattedImagePath = null;
+        String formattedImagePath = null, displayText = null;
         String gadgetName = null;
         if (null != gadgetNode.getAttributes().getNamedItem("name"))
         {
@@ -181,9 +190,6 @@ public class LayoutVerifier
         {
             gadgetName = gadgetNode.getNodeName() + indexForGadget++; // Takes default node name if name is not configured
         }
-
-//        System.out.println(" Gadget name is " + gadgetName);
-
         if (gadgetNode.getChildNodes().getLength() > 0)
         {
             for (int i = 0; i < gadgetNode.getChildNodes().getLength(); i++)
@@ -209,17 +215,34 @@ public class LayoutVerifier
                 {
                     String fullPath = gadgetNode.getChildNodes().item(i).getTextContent();
                     formattedImagePath = getFormattedPath(fullPath);
-                    System.out.println("fullPath = " + fullPath + " formattedImagePath = " + formattedImagePath);
+//                    System.out.println("fullPath = " + fullPath + " formattedImagePath = " + formattedImagePath);
                 }
-                if (gadgetType == GadgetConfig.IMAGE_BOX)
+                if (nodeName.equals("relativeX"))
                 {
-                    formattedImagePath = getImageForImageBox(gadgetNode);
+                    x = Integer.parseInt(gadgetNode.getChildNodes().item(i).getTextContent()) + actionHelpBounds.x;
                 }
-
+                if (nodeName.equals("relativeY"))
+                {
+                    y = Integer.parseInt(gadgetNode.getChildNodes().item(i).getTextContent()) + actionHelpBounds.y;
+                }
+                if (nodeName.equals("text"))
+                {
+                    displayText = gadgetNode.getChildNodes().item(i).getTextContent();
+                }
             }
+            if (gadgetType == GadgetConfig.IMAGE_BOX)
+            {
+                formattedImagePath = getImageForImageBox(gadgetNode);
+            }
+            Rectangle bounds = new Rectangle(x, y, width, height);
+            if (gadgetType == GadgetConfig.ACTION_HELP)
+            {
+                actionHelpBounds = bounds;
+            }
+
+            gadgetPropertyList.add(new GadgetDisplayElement(gadgetName, bounds, gadgetType, formattedImagePath, displayText));
         }
-        Rectangle bounds = new Rectangle(x, y, width, height);
-        gadgetNameToBoundsMap.add(new GadgetDisplayElement(gadgetName, bounds, gadgetType, formattedImagePath));
+
     }
 
     private String getFormattedPath(String fullPath)
@@ -248,7 +271,6 @@ public class LayoutVerifier
             if (imageBoxNode.getChildNodes().item(i).getNodeName().equals("data"))
             {
                 Node dataNode = imageBoxNode.getChildNodes().item(i);
-//                System.out.println("data node obtained... " + dataNode.getChildNodes().getLength());
                 // iterate thru data children
                 for (int j = 0; j < dataNode.getChildNodes().getLength(); j++)
                 {
@@ -256,13 +278,14 @@ public class LayoutVerifier
                     if (dataNode.getChildNodes().item(j).getNodeName().equals("conditionalData"))
                     {
                         Node conditionalDataNode = dataNode.getChildNodes().item(j);
-//                        System.out.println("conditionalDataNode node obtained... " + conditionalDataNode.getChildNodes().getLength());
+                        // Iterate thru conditional data children (context and group items)
                         for (int k = 0; k < conditionalDataNode.getChildNodes().getLength(); k++)
                         {
+                            // Get GroupItem child
                             if (conditionalDataNode.getChildNodes().item(k).getNodeName().equals("groupItem"))
                             {
+                                // Get GroupItem image path attribute
                                 Node groupItemNode = conditionalDataNode.getChildNodes().item(k);
-//                                System.out.println("groupItemNode node obtained... " );
                                 imagePath = groupItemNode.getAttributes().getNamedItem("imagePath").getNodeValue();
                                 System.out.println("IMAGE BOX - IMAGE PATH = " + imagePath);
                             }
