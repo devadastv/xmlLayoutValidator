@@ -10,6 +10,7 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 
 /**
  *
@@ -18,7 +19,8 @@ import java.awt.event.WindowEvent;
 public class LayoutDisplay extends Frame
 {
     ScreenMapper mapper;
-
+    ListView renderersList;
+    
     public LayoutDisplay()
     {
         this.setBounds(0, 0, 1320, 730);
@@ -27,6 +29,7 @@ public class LayoutDisplay extends Frame
 
     public void initGUI()
     {
+        // Container holding all gadgets
         Container container = new Container()
         {
             @Override
@@ -38,11 +41,22 @@ public class LayoutDisplay extends Frame
             }
         };
         container.setBounds(this.getBounds());
+        container.setVisible(true);
+
+        
+        
+        // Screen mapper - gadget displaying all xml gadgets on screen
         mapper = new ScreenMapper();
         mapper.setBounds(this.getBounds());
-        container.add(mapper);
         mapper.setVisible(true);
-        container.setVisible(true);
+        container.add(mapper);
+
+        //
+        renderersList = new ListView();
+        renderersList.setBounds(550, 40, 400, 600);
+//        renderersList.setVisible(false);
+        container.add(renderersList);
+        
         this.add(container);
         this.setVisible(true);
         addWindowListener(new WindowAdapter()
@@ -59,5 +73,12 @@ public class LayoutDisplay extends Frame
     {
         mapper.displayScreen(obj);
         this.repaint();
+    }
+
+    void setRendererList(ArrayList rendererObjectNamesList)
+    {
+        renderersList.setList(rendererObjectNamesList);
+        renderersList.setVisible(true);
+        renderersList.repaint();
     }
 }

@@ -36,6 +36,7 @@ public class ScreenMapper extends Container
     @Override
     public void paint(Graphics g)
     {
+        System.out.println("MAPPER PAINT");
         super.paint(g);
         ArrayList listOfStringLocations = new ArrayList();
         Iterator iterator = gadgetMap.iterator();

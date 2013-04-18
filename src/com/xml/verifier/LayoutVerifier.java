@@ -31,6 +31,7 @@ public class LayoutVerifier
     private int indexForGadget;
     private Rectangle actionHelpBounds;
     private Document renderersDocument;
+    ArrayList rendererObjectNamesList;
 
     public static void main(String[] a)
     {
@@ -44,10 +45,9 @@ public class LayoutVerifier
         if (null != xmlFilesToProcess && xmlFilesToProcess.length > 0)
         {
             parseAllScreensAndPopulateMap(xmlFilesToProcess);
-        printListOfScreensForUserInput();
-        processUserInput();
-        }
-        else 
+            printListOfScreensForUserInput();
+            processUserInput();
+        } else
         {
             System.out.println("NO XMLS OF REQUIRED INPUT FORMAT PRESENT IN DIRECTORY : " + OUTPUT_XML_DIR);
         }
@@ -80,6 +80,7 @@ public class LayoutVerifier
     {
         if (RENDERER_SUPPORT_REQUIRED)
         {
+            rendererObjectNamesList = new ArrayList();
             parseRenderersXml(xmlFilesToProcess);
         }
         for (int i = 0; i < xmlFilesToProcess.length; i++)
@@ -172,6 +173,10 @@ public class LayoutVerifier
         LayoutDisplay display = new LayoutDisplay();
         display.initGUI();
         display.displayScreen(gadgetMap);
+        if (RENDERER_SUPPORT_REQUIRED)
+        {
+            display.setRendererList(rendererObjectNamesList);
+        }
     }
 
     private void addStaticBackground(ArrayList gadgetPropertyList)
@@ -300,12 +305,16 @@ public class LayoutVerifier
         }
     }
 
+
     private void addRendererItemsToWidgetPropertyList(Node gadgetNode, Rectangle bounds, ArrayList gadgetPropertyList)
     {
         Node rendererNode = gadgetNode.getAttributes().getNamedItem("renderer");
         if (null != rendererNode)
         {
             String rendererToUse = rendererNode.getNodeValue();
+            
+            
+            
 //            System.out.println("rendererToUse = " + rendererToUse);
             NodeList nodeList = renderersDocument.getElementsByTagName("rendererObject");
             for (int i = 0; i < nodeList.getLength(); i++)
@@ -315,15 +324,20 @@ public class LayoutVerifier
                 {
                     String rendererObjName = rendererObjNode.getAttributes().getNamedItem("name").getNodeValue();
 
-                    if (rendererToUse.equals(rendererObjName))
+                    if (rendererToUse.equals(rendererObjName)) // Match means, got the correct rendererObject node from Renderers.xml
                     {
+                        if (!rendererObjectNamesList.contains(rendererToUse))
+                        {
+                            rendererObjectNamesList.add(rendererToUse);
+                        }
+                        int rendererIndexInNamesList = rendererObjectNamesList.indexOf(rendererToUse);
                         for (int j = 0; j < rendererObjNode.getChildNodes().getLength(); j++)
                         {
                             if ((rendererObjNode.getChildNodes().item(j).getNodeName().equals("renderItemText"))
                                     || (rendererObjNode.getChildNodes().item(j).getNodeName().equals("renderItemImage")))
                             {
                                 Node renderItemTextNode = rendererObjNode.getChildNodes().item(j);
-                                String name = renderItemTextNode.getAttributes().getNamedItem("name").getNodeValue();
+                                String name = "[" + rendererIndexInNamesList + "]" + renderItemTextNode.getAttributes().getNamedItem("name").getNodeValue();
                                 int x = 0, y = 0, width = 0, height = 30; // default height set for renderItemText
                                 String alignment = null;
                                 for (int a = 0; a < renderItemTextNode.getChildNodes().getLength(); a++)
