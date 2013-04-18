@@ -279,7 +279,7 @@ public class LayoutVerifier
                 actionHelpBounds = bounds;
             }
             // Renderer support
-            if (RENDERER_SUPPORT_REQUIRED && gadgetType == GadgetConfig.GRID)
+            if (RENDERER_SUPPORT_REQUIRED)
             {
                 addRendererItemsToWidgetPropertyList(gadgetNode, bounds, gadgetPropertyList);
             }
