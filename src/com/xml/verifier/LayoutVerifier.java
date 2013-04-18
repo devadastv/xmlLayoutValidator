@@ -25,10 +25,12 @@ import org.w3c.dom.NodeList;
 public class LayoutVerifier
 {
     public static final String OUTPUT_XML_DIR = "D:\\dev\\dstvo\\tools\\Tools-ng-encapsulation-dstvo\\";
-    public static final String STATIC_BACKGROUND_IMAGE = null;
+    public static final String STATIC_BACKGROUND_IMAGE = "/Images/SSport/background.png";
+    public static final boolean RENDERER_SUPPORT_REQUIRED = true;
     HashMap screenNameToGadgetMap;
     private int indexForGadget;
     private Rectangle actionHelpBounds;
+    private Document renderersDocument;
 
     public static void main(String[] a)
     {
@@ -69,6 +71,10 @@ public class LayoutVerifier
 
     private void parseAllScreensAndPopulateMap(File[] xmlFilesToProcess)
     {
+        if (RENDERER_SUPPORT_REQUIRED)
+        {
+            parseRenderersXml(xmlFilesToProcess);
+        }
         for (int i = 0; i < xmlFilesToProcess.length; i++)
         {
             File file = xmlFilesToProcess[i];
@@ -90,19 +96,54 @@ public class LayoutVerifier
         }
     }
 
+    private void parseRenderersXml(File[] xmlFilesToProcess)
+    {
+        for (int i = 0; i < xmlFilesToProcess.length; i++)
+        {
+            File file = xmlFilesToProcess[i];
+            DocumentBuilder dBuilder;
+            try
+            {
+                dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                Document doc = dBuilder.parse(file);
+                if (isRenderersFile(doc))
+                {
+                    renderersDocument = doc;
+                    System.out.println("RENDERER FILE IS :" + file);
+                }
+            } catch (Throwable ex)
+            {
+            }
+        }
+    }
+
+    public boolean isRenderersFile(Document doc)
+    {
+        NodeList node = doc.getElementsByTagName("*");
+        if (node.getLength() > 1 && node.item(1).getNodeName().equals("rendererContainer"))
+        {
+            return true;
+        }
+        return false;
+    }
+
     private void printListOfScreensForUserInput()
     {
         ArrayList screenList = new ArrayList(screenNameToGadgetMap.keySet());
         Collections.sort(screenList);
         Iterator iterator = screenList.iterator();
         int index = 0;
+        System.out.println("\n\n\n\n\n\n\n\n\n\n");
+        System.out.println("=====================================================");
+        System.out.println("PLEASE SELECT THE SCREEN TO ANALYZE AND PRESS ENTER: ");
+        System.out.println("=====================================================");
         while (iterator.hasNext())
         {
             String screenNameInMap = (String) iterator.next();
             System.out.println("" + ++index + ". " + screenNameInMap);
         }
-        System.out.println("Any other number : EXIT");
-        System.out.println("Please select the screen to analyze: ");
+        System.out.println("PRESS Any other number to EXIT");
+        System.out.println("PLEASE SELECT THE SCREEN TO ANALYZE AND PRESS ENTER: ");
     }
 
     private void processUserInput()
@@ -187,6 +228,7 @@ public class LayoutVerifier
         {
             gadgetName = gadgetNode.getNodeName() + indexForGadget++; // Takes default node name if name is not configured
         }
+
         if (gadgetNode.getChildNodes().getLength() > 0)
         {
             for (int i = 0; i < gadgetNode.getChildNodes().getLength(); i++)
@@ -236,9 +278,124 @@ public class LayoutVerifier
             {
                 actionHelpBounds = bounds;
             }
-
+            // Renderer support
+            if (RENDERER_SUPPORT_REQUIRED && gadgetType == GadgetConfig.GRID)
+            {
+                addRendererItemsToWidgetPropertyList(gadgetNode, bounds, gadgetPropertyList);
+            }
             gadgetPropertyList.add(new GadgetDisplayElement(gadgetName, bounds, gadgetType, formattedImagePath, displayText));
         }
+    }
+
+    private void addRendererItemsToWidgetPropertyList(Node gadgetNode, Rectangle bounds, ArrayList gadgetPropertyList)
+    {
+        Node rendererNode = gadgetNode.getAttributes().getNamedItem("renderer");
+        if (null != rendererNode)
+        {
+            String rendererToUse = rendererNode.getNodeValue();
+//            System.out.println("rendererToUse = " + rendererToUse);
+            NodeList nodeList = renderersDocument.getElementsByTagName("rendererObject");
+            for (int i = 0; i < nodeList.getLength(); i++)
+            {
+                Node rendererObjNode = nodeList.item(i);
+                if (null != rendererObjNode.getAttributes().getNamedItem("name"))
+                {
+                    String rendererObjName = rendererObjNode.getAttributes().getNamedItem("name").getNodeValue();
+
+                    if (rendererToUse.equals(rendererObjName))
+                    {
+                        for (int j = 0; j < rendererObjNode.getChildNodes().getLength(); j++)
+                        {
+                            if ((rendererObjNode.getChildNodes().item(j).getNodeName().equals("renderItemText"))
+                                    || (rendererObjNode.getChildNodes().item(j).getNodeName().equals("renderItemImage")))
+                            {
+                                Node renderItemTextNode = rendererObjNode.getChildNodes().item(j);
+                                String name = renderItemTextNode.getAttributes().getNamedItem("name").getNodeValue();
+                                int x = 0, y = 0, width = 0, height = 30; // default height set for renderItemText
+                                String alignment = null;
+                                for (int a = 0; a < renderItemTextNode.getChildNodes().getLength(); a++)
+                                {
+                                    String nodeName = renderItemTextNode.getChildNodes().item(a).getNodeName();
+                                    if (nodeName.equals("x"))
+                                    {
+                                        x = Integer.parseInt(renderItemTextNode.getChildNodes().item(a).getTextContent()) + bounds.x;
+                                    }
+                                    if (nodeName.equals("y"))
+                                    {
+                                        y = Integer.parseInt(renderItemTextNode.getChildNodes().item(a).getTextContent()) + bounds.y;
+                                    }
+                                    if ((nodeName.equals("textWidth")) || (nodeName.equals("imageWidth")))
+                                    {
+                                        width = Integer.parseInt(renderItemTextNode.getChildNodes().item(a).getTextContent());
+                                    }
+                                    if (nodeName.equals("imageHeight"))
+                                    {
+                                        height = Integer.parseInt(renderItemTextNode.getChildNodes().item(a).getTextContent());
+                                    }
+                                    if (nodeName.equals("alignment"))
+                                    {
+                                        alignment = renderItemTextNode.getChildNodes().item(a).getTextContent();
+                                    }
+                                }
+                                gadgetPropertyList.add(
+                                        new GadgetDisplayElement(name, new Rectangle(calculateX(x, width, alignment), calculateY(y, height, alignment), width, height),
+                                        GadgetConfig.getGadgetTypeIfSupported("renderItemText"), null, null));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static int calculateX(int x, int width, String alignment)
+    {
+        if (null == alignment)
+        {
+            return 0;
+        }
+        if ((alignment.equals("ALIGN_TOP_LEFT")) || (alignment.equals("ALIGN_MIDDLE_LEFT"))
+                || (alignment.equals("ALIGN_BOTTOM_LEFT")) || (alignment.equals("ALIGN_ARRAY_LEFT"))
+                || (alignment.equals("ALIGN_ARRAY_TOP")) || (alignment.equals("ALIGN_ARRAY_BOTTOM")))
+        {
+            return x;
+        }
+        if ((alignment.equals("ALIGN_TOP_CENTER")) || (alignment.equals("ALIGN_MIDDLE_CENTER"))
+                || (alignment.equals("ALIGN_BOTTOM_CENTER")))
+        {
+            return (x - (width / 2));
+        }
+        if ((alignment.equals("ALIGN_TOP_RIGHT")) || (alignment.equals("ALIGN_MIDDLE_RIGHT"))
+                || (alignment.equals("ALIGN_BOTTOM_RIGHT")) || (alignment.equals("ALIGN_ARRAY_RIGHT")))
+        {
+            return (x - width);
+        }
+        return 0;
+    }
+
+    private static int calculateY(int y, int height, String alignment)
+    {
+        if (null == alignment)
+        {
+            return 0;
+        }
+        if ((alignment.equals("ALIGN_TOP_LEFT")) || (alignment.equals("ALIGN_TOP_CENTER"))
+                || (alignment.equals("ALIGN_TOP_RIGHT")) || (alignment.equals("ALIGN_ARRAY_TOP"))
+                || (alignment.equals("ALIGN_ARRAY_RIGHT")) || (alignment.equals("ALIGN_ARRAY_LEFT")))
+        {
+            return y;
+        }
+        if ((alignment.equals("ALIGN_MIDDLE_LEFT")) || (alignment.equals("ALIGN_MIDDLE_CENTER"))
+                || (alignment.equals("ALIGN_MIDDLE_RIGHT")))
+        {
+            return (y - (height / 2));
+        }
+        if ((alignment.equals("ALIGN_BOTTOM_RIGHT")) || (alignment.equals("ALIGN_BOTTOM_CENTER"))
+                || (alignment.equals("ALIGN_BOTTOM_LEFT")) || (alignment.equals("ALIGN_ARRAY_BOTTOM")))
+        {
+            return (y - height);
+        }
+        return 0;
     }
 
     /**

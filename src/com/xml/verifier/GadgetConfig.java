@@ -25,6 +25,8 @@ public class GadgetConfig
     public static final short ARROWS = 9;
     public static final short IMAGE_BOX = 10;
     public static final short HELP_ITEM = 11;
+    public static final short RENDER_ITEM_TEXT = 12;
+
 
     public static short getGadgetTypeIfSupported(String gadgetName)
     {
@@ -76,6 +78,10 @@ public class GadgetConfig
         {
             return HELP_ITEM;
         }
+        if (gadgetName.equals("renderItemText"))
+        {
+            return RENDER_ITEM_TEXT;
+        }
         return GADGET_NOT_SUPPORTED;
     }
 
@@ -86,29 +92,45 @@ public class GadgetConfig
             case VERTICAL_LIST:
                 return Color.red;
             case HORIZONTAL_LIST:
-                return Color.green;
+                return Color.green; // Rare in our xml
             case FOCUS_BOX:
                 return Color.green;
             case GRID:
-                return Color.cyan;
-            case VERTICAL_BOX:
                 return Color.blue;
+            case VERTICAL_BOX:
+                return Color.blue; // Rare in our xml
             case SELECTION_OVAL:
-                return Color.magenta;
+                return new Color(255, 89, 89);
             case ACTION_HELP:
                 return Color.white;
             case VEIL_RECTANGLE:
                 return Color.PINK;
             case TEXT_BOX:
-                return Color.darkGray;
+                return new Color(242, 121, 0);
             case ARROWS:
-                return Color.RED;
+                return new Color(0, 215, 0);
             case IMAGE_BOX:
-                return Color.green;
+                return new Color(155, 155, 0);
             case HELP_ITEM:
                 return Color.cyan;
+            case RENDER_ITEM_TEXT:
+                return getRenderItemTextAlternateColor();
             default:
                 return Color.gray;
         }
+    }
+    private static Color[] renderItemTextColors =
+    {
+        new Color(224, 14, 184), new Color(56, 190, 12),
+        new Color(190, 65, 12), new Color(126, 77, 77)
+    };
+    private static int renderItemTextColorIndex;
+    private static Color getRenderItemTextAlternateColor()
+    {
+        if (++renderItemTextColorIndex >= renderItemTextColors.length)
+        {
+            renderItemTextColorIndex = 0;
+        }
+        return renderItemTextColors[renderItemTextColorIndex];
     }
 }
