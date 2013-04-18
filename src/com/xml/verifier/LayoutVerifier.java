@@ -24,8 +24,8 @@ import org.w3c.dom.NodeList;
  */
 public class LayoutVerifier
 {
-    public static final String OUTPUT_XML_DIR = "D:\\dev\\dstvo\\tools\\Tools-ng-encapsulation-dstvo\\";
-    public static final String STATIC_BACKGROUND_IMAGE = "/Images/SSport/background.png";
+    public static final String OUTPUT_XML_DIR = "<OUTPUT_XML_DIR_PATH>";
+    public static final String STATIC_BACKGROUND_IMAGE = "/Images/<APP_NAME>/background.png";
     public static final boolean RENDERER_SUPPORT_REQUIRED = true;
     HashMap screenNameToGadgetMap;
     private int indexForGadget;
@@ -41,9 +41,16 @@ public class LayoutVerifier
     {
         System.out.println("\n\n PLEASE WAIT WHILE THE XML FILES ARE BEING PARSED...");
         File[] xmlFilesToProcess = scanFilesInFolder();
-        parseAllScreensAndPopulateMap(xmlFilesToProcess);
+        if (null != xmlFilesToProcess && xmlFilesToProcess.length > 0)
+        {
+            parseAllScreensAndPopulateMap(xmlFilesToProcess);
         printListOfScreensForUserInput();
         processUserInput();
+        }
+        else 
+        {
+            System.out.println("NO XMLS OF REQUIRED INPUT FORMAT PRESENT IN DIRECTORY : " + OUTPUT_XML_DIR);
+        }
     }
 
     public LayoutVerifier()
