@@ -128,8 +128,8 @@ public class GadgetConfig
     }
     private static Color[] renderItemTextColors =
     {
-        new Color(224, 14, 184), new Color(56, 190, 12),
-        new Color(190, 65, 12), new Color(126, 77, 77)
+        new Color(200, 30, 30, 100), new Color(0, 255, 0, 100),
+        new Color(255, 255, 0, 100), new Color(0, 255, 255, 100)
     };
     private static int renderItemTextColorIndex;
     private static Color getRenderItemTextAlternateColor()
