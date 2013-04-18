@@ -276,6 +276,8 @@ public class LayoutVerifier
                     displayText = gadgetNode.getChildNodes().item(i).getTextContent();
                 }
             }
+
+            // Special gadget specific processing below
             if (gadgetType == GadgetConfig.IMAGE_BOX)
             {
                 formattedImagePath = getImageForImageBox(gadgetNode);
@@ -289,6 +291,10 @@ public class LayoutVerifier
             if (RENDERER_SUPPORT_REQUIRED)
             {
                 addRendererItemsToWidgetPropertyList(gadgetNode, bounds, gadgetPropertyList);
+            }
+            if (gadgetType == GadgetConfig.AV_CONTAINER)
+            {
+                formattedImagePath = "/SSport/video.png";
             }
             gadgetPropertyList.add(new GadgetDisplayElement(gadgetName, bounds, gadgetType, formattedImagePath, displayText));
         }
@@ -346,7 +352,7 @@ public class LayoutVerifier
                                 }
                                 gadgetPropertyList.add(
                                         new GadgetDisplayElement(name, new Rectangle(calculateX(x, width, alignment), calculateY(y, height, alignment), width, height),
-                                        GadgetConfig.getGadgetTypeIfSupported("renderItemText"), null, null));
+                                        GadgetConfig.getGadgetTypeIfSupported("renderItemTextOrImage"), null, null));
                             }
                         }
                     }

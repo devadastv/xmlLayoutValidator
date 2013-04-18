@@ -25,7 +25,8 @@ public class GadgetConfig
     public static final short ARROWS = 9;
     public static final short IMAGE_BOX = 10;
     public static final short HELP_ITEM = 11;
-    public static final short RENDER_ITEM_TEXT = 12;
+    public static final short RENDER_ITEM_TEXT_OR_IMAGE = 12;
+    public static final short AV_CONTAINER = 13;
 
 
     public static short getGadgetTypeIfSupported(String gadgetName)
@@ -78,9 +79,13 @@ public class GadgetConfig
         {
             return HELP_ITEM;
         }
-        if (gadgetName.equals("renderItemText"))
+        if (gadgetName.equals("renderItemTextOrImage"))
         {
-            return RENDER_ITEM_TEXT;
+            return RENDER_ITEM_TEXT_OR_IMAGE;
+        }
+        if (gadgetName.equals("avContainer"))
+        {
+            return AV_CONTAINER;
         }
         return GADGET_NOT_SUPPORTED;
     }
@@ -113,8 +118,10 @@ public class GadgetConfig
                 return new Color(155, 155, 0);
             case HELP_ITEM:
                 return Color.cyan;
-            case RENDER_ITEM_TEXT:
+            case RENDER_ITEM_TEXT_OR_IMAGE:
                 return getRenderItemTextAlternateColor();
+             case AV_CONTAINER:
+                return Color.green;
             default:
                 return Color.gray;
         }
