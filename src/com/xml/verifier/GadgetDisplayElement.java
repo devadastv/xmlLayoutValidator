@@ -81,7 +81,8 @@ public class GadgetDisplayElement implements Comparable
 
     private static Image loadImage(String fileName)
     {
-        fileName = LayoutVerifier.OUTPUT_XML_DIR + "/../../Resources/Images/" + fileName;
+        fileName = LayoutVerifier.RESOURCES_DIR + "/../../../../../Resources/Images/" + fileName;
+        System.out.println("Loading image = " + fileName);
         Image image = Toolkit.getDefaultToolkit().createImage(fileName);
         MediaTracker tracker = new MediaTracker(new Container());
         tracker.addImage(image, 0);

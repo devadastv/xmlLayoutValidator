@@ -6,7 +6,6 @@ package com.xml.verifier;
 
 import java.awt.Rectangle;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +13,7 @@ import java.util.Iterator;
 import java.util.Scanner;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -24,9 +24,8 @@ import org.w3c.dom.NodeList;
  */
 public class LayoutVerifier
 {
-    public static final String OUTPUT_XML_DIR = "<OUTPUT_XML_DIR_PATH>";
+    public static final String RESOURCES_DIR = "<APP_RESOURCES_DIR_PATH>";
     public static final String STATIC_BACKGROUND_IMAGE = "/Images/<APP_NAME>/background.png";
-    public static final boolean RENDERER_SUPPORT_REQUIRED = true;
     HashMap screenNameToGadgetMap;
     private int indexForGadget;
     private Rectangle actionHelpBounds;
@@ -41,15 +40,18 @@ public class LayoutVerifier
     private void doAction()
     {
         System.out.println("\n\n PLEASE WAIT WHILE THE XML FILES ARE BEING PARSED...");
-        File[] xmlFilesToProcess = scanFilesInFolder();
-        if (null != xmlFilesToProcess && xmlFilesToProcess.length > 0)
+        File dir = new File(RESOURCES_DIR);
+        ArrayList screenFileList = new ArrayList();
+        getScreenFileList(dir, screenFileList);
+        if (screenFileList.size() > 0)
         {
-            parseAllScreensAndPopulateMap(xmlFilesToProcess);
+            parseRenderersXml();
+            parseAllScreensAndPopulateMap(screenFileList);
             printListOfScreensForUserInput();
             processUserInput();
         } else
         {
-            System.out.println("NO XMLS OF REQUIRED INPUT FORMAT PRESENT IN DIRECTORY : " + OUTPUT_XML_DIR);
+            System.out.println("NO XMLS OF REQUIRED INPUT FORMAT PRESENT IN DIRECTORY : " + RESOURCES_DIR);
         }
     }
 
@@ -58,70 +60,123 @@ public class LayoutVerifier
         screenNameToGadgetMap = new HashMap();
     }
 
-    private File[] scanFilesInFolder()
+    private void getScreenFileList(File dir, ArrayList screenFileList)
     {
-        File flattenedDir = new File(OUTPUT_XML_DIR);
-        File[] listOfFlattenedFiles = flattenedDir.listFiles(new FilenameFilter()
+        File[] fileList = dir.listFiles();
+        for (int i = 0; i < fileList.length; i++)
         {
-            @Override
-            public boolean accept(File file, String string)
+            File file = fileList[i];
+            if (file.isDirectory())
             {
-                if ((string.endsWith("xml")) && ((string.startsWith("output"))))
+                getScreenFileList(file, screenFileList);
+            } else
+            {
+                if (file.getName().toLowerCase().endsWith("screen.xml"))
                 {
-                    return true;
+                    screenFileList.add(file);
                 }
-                return false;
             }
-        });
-        return listOfFlattenedFiles;
+        }
     }
 
-    private void parseAllScreensAndPopulateMap(File[] xmlFilesToProcess)
+    private void parseAllScreensAndPopulateMap(ArrayList screenFileList)
     {
-        if (RENDERER_SUPPORT_REQUIRED)
+        DocumentBuilder dBuilder = null;
+        try
         {
-            rendererObjectNamesList = new ArrayList();
-            parseRenderersXml(xmlFilesToProcess);
+            dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        } catch (ParserConfigurationException ex)
+        {
+            System.out.println("ERROR ON CREATING XML PARSER. EXITING... !!!");
+            System.exit(0);
         }
-        for (int i = 0; i < xmlFilesToProcess.length; i++)
+        for (int i = 0; i < screenFileList.size(); i++)
         {
-            File file = xmlFilesToProcess[i];
-            DocumentBuilder dBuilder;
+            File screenFile = (File) screenFileList.get(i);
             try
             {
-                dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                Document doc = dBuilder.parse(file);
-                if (isScreenFile(doc))
+                Document screenFileDoc = dBuilder.parse(screenFile);
+                ArrayList gadgetPropertyList = new ArrayList();
+                indexForGadget = 0;
+                addWidgetsToPropertyList(screenFileDoc.getDocumentElement(), gadgetPropertyList);
+                File templateFile = getTemplateFile(screenFileDoc, screenFile);
+                if (null != templateFile)
                 {
-                    ArrayList gadgetPropertyList = new ArrayList();
-                    indexForGadget = 0;
-                    verifyLayout(doc.getDocumentElement(), gadgetPropertyList);
-                    addStaticBackground(gadgetPropertyList);
+                    Document templateFileDoc = dBuilder.parse(templateFile);
+                    addWidgetsToPropertyList(templateFileDoc.getDocumentElement(), gadgetPropertyList);
+                }
+                addStaticBackground(gadgetPropertyList);
+                String screenFileName = screenFile.getAbsolutePath();
+                if (null != screenFileName && !screenNameToGadgetMap.containsKey(screenFileName) && gadgetPropertyList.size() > 0)
+                {
+                    screenNameToGadgetMap.put(screenFileName, gadgetPropertyList);
+                } else
+                {
+                    System.out.println("THE SCREEN [" + screenFileName + "] IS NOT ADDED TO USER LIST!!! PLEASE INVESTIGATE");
                 }
             } catch (Exception ex)
             {
+                System.out.println("EXCEPTION CAUGHT ON PARSING THE FILE = " + screenFile);
             }
         }
     }
 
-    private void parseRenderersXml(File[] xmlFilesToProcess)
+    private File getTemplateFile(Document screenFileDoc, File screenFile)
     {
-        for (int i = 0; i < xmlFilesToProcess.length; i++)
+        NodeList nodeList = screenFileDoc.getElementsByTagName("channelGridG14");
+        String fileName = null, xpath = null;
+        if (nodeList.getLength() > 0)
         {
-            File file = xmlFilesToProcess[i];
+            Node templateSpecifierNode = nodeList.item(0);
+            for (int i = 0; i < templateSpecifierNode.getAttributes().getLength(); i++)
+            {
+                if (templateSpecifierNode.getAttributes().item(i).getNodeName().equals("template"))
+                {
+                    fileName = templateSpecifierNode.getAttributes().item(i).getNodeValue();
+                }
+            }
+            if ((null != fileName) && (fileName.length() > 0))
+            {
+                String templateFileName = RESOURCES_DIR + File.separatorChar + ".." + File.separatorChar + fileName;
+                System.out.println("templateFileName = " + templateFileName);
+                File templateFile = new File(templateFileName);
+                if (templateFile.exists())
+                {
+                    return templateFile;
+                } else
+                {
+                    System.out.println("TEMPLATE FILE DOESN'T EXISTS !!! -> " + templateFileName);
+                }
+            }
+        } else
+        {
+            System.out.println("!!!! NO TEMPLATE NODE OBTAINED FOR SCREEN FILE = " + screenFile);
+        }
+        return null;
+    }
+
+    private void parseRenderersXml()
+    {
+        rendererObjectNamesList = new ArrayList();
+        File renderersFile = new File(RESOURCES_DIR + File.separatorChar + "common" + File.separatorChar + "Renderers.xml");
+        if (renderersFile.exists())
+        {
             DocumentBuilder dBuilder;
             try
             {
                 dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                Document doc = dBuilder.parse(file);
+                Document doc = dBuilder.parse(renderersFile);
                 if (isRenderersFile(doc))
                 {
                     renderersDocument = doc;
-                    System.out.println("RENDERER FILE IS :" + file);
+                    System.out.println("RENDERER FILE IS :" + renderersFile);
                 }
             } catch (Throwable ex)
             {
             }
+        } else
+        {
+            System.out.println("!!!! RENDERERS FILE DOESN'T EXIST !!!! EXPECTED IN THIS PATH : " + renderersFile.getAbsolutePath());
         }
     }
 
@@ -148,7 +203,13 @@ public class LayoutVerifier
         while (iterator.hasNext())
         {
             String screenNameInMap = (String) iterator.next();
-            System.out.println("" + ++index + ". " + screenNameInMap.substring(screenNameInMap.lastIndexOf("/") + 1));
+            if (screenNameInMap.lastIndexOf("/") > 0)
+            {
+                System.out.println("" + ++index + ". " + screenNameInMap.substring(screenNameInMap.lastIndexOf("/") + 1));
+            } else
+            {
+                System.out.println("" + ++index + ". " + screenNameInMap.substring(screenNameInMap.lastIndexOf("\\") + 1));
+            }
         }
         System.out.println("PRESS Any other number to EXIT");
         System.out.println("PLEASE SELECT THE SCREEN TO ANALYZE AND PRESS ENTER: ");
@@ -163,19 +224,16 @@ public class LayoutVerifier
         int screenIndex = Integer.parseInt(s);
         if (screenIndex > 0 && screenIndex <= screenList.size())
         {
-            System.out.println("screen selected is : " + screenList.get(screenIndex - 1));
+            System.out.println("\n\nscreen selected is : " + screenList.get(screenIndex - 1));
+            ArrayList gadgetMap = (ArrayList) screenNameToGadgetMap.get(screenList.get(screenIndex - 1));
+            LayoutDisplay display = new LayoutDisplay();
+            display.initGUI();
+            display.displayScreen(gadgetMap);
+            display.setRendererList(rendererObjectNamesList);
         } else
         {
             System.out.println("EXITING...");
             System.exit(0);
-        }
-        ArrayList gadgetMap = (ArrayList) screenNameToGadgetMap.get(screenList.get(screenIndex - 1));
-        LayoutDisplay display = new LayoutDisplay();
-        display.initGUI();
-        display.displayScreen(gadgetMap);
-        if (RENDERER_SUPPORT_REQUIRED)
-        {
-            display.setRendererList(rendererObjectNamesList);
         }
     }
 
@@ -188,19 +246,8 @@ public class LayoutVerifier
         }
     }
 
-    public boolean isScreenFile(Document doc)
+    public void addWidgetsToPropertyList(Node node, ArrayList gadgetPropertyList)
     {
-        NodeList node = doc.getElementsByTagName("*");
-        if (node.getLength() > 1 && node.item(1).getNodeName().equals("screen"))
-        {
-            return true;
-        }
-        return false;
-    }
-
-    public void verifyLayout(Node node, ArrayList gadgetPropertyList)
-    {
-        String screenName = null;
         if (node != null)
         {
             if (node.getChildNodes().getLength() > 0)
@@ -213,18 +260,9 @@ public class LayoutVerifier
                     {
                         addToLayout(node.getChildNodes().item(i), gadgetPropertyList, gadgetType);
                     }
-                    if (nodeName.equals("screen"))
-                    {
-                        screenName = node.getChildNodes().item(i).getAttributes().getNamedItem("name").getNodeValue();
-                    }
-                    verifyLayout(node.getChildNodes().item(i), gadgetPropertyList);
+                    addWidgetsToPropertyList(node.getChildNodes().item(i), gadgetPropertyList);
                 }
             }
-        }
-
-        if (null != screenName && !screenNameToGadgetMap.containsKey(screenName) && gadgetPropertyList.size() > 0)
-        {
-            screenNameToGadgetMap.put(screenName, gadgetPropertyList);
         }
     }
 
@@ -266,7 +304,6 @@ public class LayoutVerifier
                 {
                     String fullPath = gadgetNode.getChildNodes().item(i).getTextContent();
                     formattedImagePath = getFormattedPath(fullPath);
-//                    System.out.println("fullPath = " + fullPath + " formattedImagePath = " + formattedImagePath);
                 }
                 if (nodeName.equals("relativeX"))
                 {
@@ -293,10 +330,10 @@ public class LayoutVerifier
                 actionHelpBounds = bounds;
             }
             // Renderer support
-            if (RENDERER_SUPPORT_REQUIRED)
-            {
-                addRendererItemsToWidgetPropertyList(gadgetNode, bounds, gadgetPropertyList);
-            }
+//            if (RENDERER_SUPPORT_REQUIRED)
+//            {
+            addRendererItemsToWidgetPropertyList(gadgetNode, bounds, gadgetPropertyList);
+//            }
             if (gadgetType == GadgetConfig.AV_CONTAINER)
             {
                 formattedImagePath = "/SSport/video.png";
@@ -305,16 +342,15 @@ public class LayoutVerifier
         }
     }
 
-
     private void addRendererItemsToWidgetPropertyList(Node gadgetNode, Rectangle bounds, ArrayList gadgetPropertyList)
     {
         Node rendererNode = gadgetNode.getAttributes().getNamedItem("renderer");
         if (null != rendererNode)
         {
             String rendererToUse = rendererNode.getNodeValue();
-            
-            
-            
+
+
+
 //            System.out.println("rendererToUse = " + rendererToUse);
             NodeList nodeList = renderersDocument.getElementsByTagName("rendererObject");
             for (int i = 0; i < nodeList.getLength(); i++)
@@ -445,6 +481,8 @@ public class LayoutVerifier
         return formattedImagePath;
     }
 
+    // Since input is not read from output xml files, the feature to display the configured image
+    // for image box is no longer supported
     private String getImageForImageBox(Node imageBoxNode)
     {
         String imagePath = null;
