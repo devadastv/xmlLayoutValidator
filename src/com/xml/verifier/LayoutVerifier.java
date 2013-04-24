@@ -148,7 +148,7 @@ public class LayoutVerifier
         while (iterator.hasNext())
         {
             String screenNameInMap = (String) iterator.next();
-            System.out.println("" + ++index + ". " + screenNameInMap);
+            System.out.println("" + ++index + ". " + screenNameInMap.substring(screenNameInMap.lastIndexOf("/") + 1));
         }
         System.out.println("PRESS Any other number to EXIT");
         System.out.println("PLEASE SELECT THE SCREEN TO ANALYZE AND PRESS ENTER: ");
